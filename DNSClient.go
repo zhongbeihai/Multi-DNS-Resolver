@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"multi-dns-resolver/pkg"
+	"net/http"
 	"time"
 
 	"github.com/miekg/dns"
@@ -24,7 +25,7 @@ func NewClient(servers []DNSServer) *DNSClient {
 		servers: servers,
 		resolvers: map[string]pkg.DNSResolver{
 			"udp": &pkg.UDPResolver{Timeout: 5 * time.Second},
-			//"doh": &DoHResolver{Client: &http.Client{Timeout: 10 * time.Second}},
+			"doh": &pkg.DoHResolver{Client: &http.Client{Timeout: 10 * time.Second}},
 			"dot": &pkg.DoTResolver{Timeout: 5 * time.Second},
 		},
 	}
@@ -74,8 +75,9 @@ func (c *DNSClient) Query(qname string, qtype uint16) (*dns.Msg, error) {
 func main() {
 	// Example usage
 	servers := []DNSServer{
-		{Addr: "8.8.8.8:53", Protocol: "udp"},
-		{Addr: "1.1.1.1:853", Protocol: "dot"},
+		// {Addr: "8.8.8.8:53", Protocol: "udp"},
+		// {Addr: "1.1.1.1:853", Protocol: "dot"},
+		{Addr: "https://dns.google/dns-query", Protocol: "doh"},
 	}
 	client := NewClient(servers)
 
