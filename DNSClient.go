@@ -1,7 +1,8 @@
-package multidnsresolver
+package main
 
 import (
 	"context"
+	"log"
 	"multi-dns-resolver/pkg"
 	"time"
 
@@ -47,7 +48,8 @@ func (c *DNSClient) Query(qname string, qtype uint16) (*dns.Msg, error){
 		}
 
 		go func (s DNSServer, r pkg.DNSResolver)  {
-			msg, err := r.Resolve(ctx, s.Addr, qname, qtype)
+			msg, rtt, err := r.Resolve(ctx, s.Addr, qname, qtype)
+			log.Println(s.Addr, rtt)
 			select{
 			case resCh <- result{msg: msg, err: err}:
 			case <- ctx.Done():
@@ -68,4 +70,23 @@ func (c *DNSClient) Query(qname string, qtype uint16) (*dns.Msg, error){
 	}
 
 	return nil, firstErr
+}
+
+func main() {
+	// Example usage
+	servers := []DNSServer{
+		{Addr: "8.8.8.8:53", Protocol: "udp"},
+		{Addr: "1.1.1.1:53", Protocol: "dot"},
+	}
+	client := NewClient(servers)
+
+	// Query A record for example.com
+	msg, err := client.Query("google.com", dns.TypeA)
+	if err != nil {
+		log.Fatalf("query failed: %v", err)
+	}
+
+	for _, ans := range msg.Answer {
+		log.Println(ans.String())
+	}
 }
